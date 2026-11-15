@@ -285,6 +285,23 @@ extremo de ese desajuste entre parámetros y datos. (En la figura, los RMSE de l
 leyenda son los del **último origen** —donde la LSTM baja a 1,4—, no los
 promedios de la tabla.)
 
+**¿Qué mes pronostica peor cada modelo?** El *backtest* promedia el error de los
+12 pasos; desglosarlo por horizonte muestra a qué distancia falla más cada uno.
+
+![Error por horizonte](../figuras/error_horizonte.png)
+
+- El **SARIMAX** (azul) es el de menor error en casi todos los horizontes y el
+  que menos se degrada: se mantiene por debajo de 1,9 en todo el rango.
+- El **SVR**, el mejor de ML, arranca pegado al clásico en los primeros 1–2
+  meses, pero se degrada rápido y hacia el **mes 10** es el peor de todos
+  (≈ 2,65): los modelos de ML extrapolan peor cuanto más lejos está el horizonte.
+- La **LSTM** queda en medio y se degrada de forma suave, siempre por debajo del
+  SVR.
+- Todos coinciden en un **pico de error hacia los meses 9–10** y un valle hacia
+  los meses 5–6; ese patrón viene de qué meses del calendario caen a ese
+  horizonte en los 13 orígenes. El horizonte que peor pronostican todos es el
+  **mes 10**.
+
 ## 6. Conclusión
 
 > [!TIP]

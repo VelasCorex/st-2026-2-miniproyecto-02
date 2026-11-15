@@ -678,6 +678,44 @@ def graficar_pronosticos(serie, modelos):
     plt.close(figura)
 
 
+def graficar_error_horizonte(serie, modelos):
+    """RMSE por horizonte (1 a 12 meses) de cada modelo elegido.
+
+    Repite los mismos orígenes del backtest de `comun.backtest` (sin
+    modificarlo) y acumula el error cuadrático en cada paso del pronóstico, de
+    modo que se ve a qué horizonte pronostica peor cada modelo. Añade el
+    estacional ingenuo como referencia. Guarda figuras/error_horizonte.png.
+    """
+    h = PERIODO
+    modelos = {**modelos,
+               "estacional ingenuo": lambda t, k: estacional_ingenuo(t, k, PERIODO)}
+    primero = len(serie) - N_PRUEBA
+    origenes = list(range(primero, len(serie) - h + 1))
+    acum = {nombre: np.zeros(h) for nombre in modelos}
+    for corte in origenes:
+        entrenamiento = serie.iloc[:corte]
+        real = serie.iloc[corte:corte + h].to_numpy()
+        for nombre, modelo in modelos.items():
+            pred = np.asarray(modelo(entrenamiento, h), dtype=float)
+            acum[nombre] += (real - pred) ** 2
+    pasos = np.arange(1, h + 1)
+    figura, eje = plt.subplots(figsize=(9, 3.6))
+    for nombre in modelos:
+        rmse_h = np.sqrt(acum[nombre] / len(origenes))
+        estilo = "--" if nombre == "estacional ingenuo" else "-"
+        eje.plot(pasos, rmse_h, marker="o", markersize=3, linestyle=estilo, label=nombre)
+    eje.set_xticks(pasos)
+    eje.set_xlabel("horizonte (meses adelante)")
+    eje.set_ylabel("RMSE")
+    eje.set_title("Error por horizonte: RMSE a cada paso del pronóstico "
+                  "(promedio de los orígenes)")
+    eje.legend(fontsize=8)
+    figura.tight_layout()
+    figura.savefig(FIGURAS / "error_horizonte.png", dpi=120)
+    plt.close(figura)
+    print("Error por horizonte en figuras/error_horizonte.png")
+
+
 def pendiente(parte, error):
     print(f"  pendiente: {parte} ({error})")
 
@@ -743,6 +781,7 @@ def main():
     print("Mejor modelo por RMSE:", tabla.iloc[0]["modelo"])
     if len(elegidos_para_figura) > 1:
         graficar_pronosticos(serie, elegidos_para_figura)
+        graficar_error_horizonte(serie, elegidos_para_figura)
     print(f"Tiempo total: {time.perf_counter() - inicio:.0f} s")
 
 
